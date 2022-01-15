@@ -1,6 +1,6 @@
 #!/bin/sh
 ##################################################################################
-# Version	: 1.01			#
+# Version	: 1.02			#
 # Date		: 2021-01-09		#
 # Author	: yungvenuz		#
 # Conact	: 5196666qwe@email.com	#
@@ -156,13 +156,7 @@ if type 'nvs' 2>/dev/null | grep -q 'function'; then
         nvs link lts
 
         npm install -g cnpm --registry=https://registry.npmmirror.com
-        
-        # create npm global directory
-        if [[ -d "$HOME/.npm-global" ]]; then
-            npm config set prefix ~/.npm-global
-            export PATH=$HOME/.npm-global/bin:$PATH
-            echo "export PATH=~/.npm-global/bin:$PATH" >>~/.zshrc
-        fi
+
 
         # cnpm i -g lazycommit
         # cnpm i -g lazyclone
@@ -426,7 +420,7 @@ http {
 
 
 	location /erp/ {
-	     proxy_pass http://39.103.235.7:3001/;
+	     proxy_pass http://127.0.0.1:3001/;
 	     proxy_redirect off;
 	     proxy_set_header X-Real-IP $remote_addr;
              proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
@@ -486,7 +480,6 @@ fi
 # oh-my-zsh
 # oh-my-zsh
 ##################################################################################
-
 # Install oh-my-zsh
 if [[ ! -d "$HOME/.oh-my-zsh" ]]; then
     log "${BLUE} Installing ${FUCHSIA}oh-my-zsh..."
@@ -497,16 +490,29 @@ if [[ ! -d "$HOME/.oh-my-zsh" ]]; then
     # change default shell
     chsh -s /bin/zsh
 
-    # install zsh-autojump
-    # echo '[ -f /usr/local/etc/profile.d/autojump.sh ] && . /usr/local/etc/profile.d/autojump.sh' >>~/.zshrc
-
     # config nvs in zsh
     echo "export NVS_HOME=$HOME/.nvs" >>~/.zshrc
     echo "[ -s $NVS_HOME/nvs.sh ] && . $NVS_HOME/nvs.sh" >>~/.zshrc
+
+    # create npm global directory
+    if [[ -d "$HOME/.npm-global" ]]; then
+        npm config set prefix ~/.npm-global
+        export PATH=$HOME/.npm-global/bin:$PATH
+        echo "export PATH=~/.npm-global/bin:$PATH" >>~/.zshrc
+    fi
+
+    # install zsh-autosuggestions
+    # git clone https://github.com/zsh-users/zsh-autosuggestions ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions
+    git clone https://gitee.com/Coxhuang/zsh-autosuggestions ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions
+
+    # install zsh-syntax-highlighting
+    # git clone https://github.com/zsh-users/zsh-syntax-highlighting.git ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting
+    git clone https://gitee.com/simonliu009/zsh-syntax-highlighting ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting
+
+    # config zsh plugins
+    sed -i.bak 's/^plugins=(\(.*\)/plugins=(vi-mode z colored-man-pages extract zsh-autosuggestions zsh-syntax-highlighting \1/' ~/.zshrc
+
     # switch to zsh shell
     zsh
     source ~/.zshrc
 fi
-
-
-
