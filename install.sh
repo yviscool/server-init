@@ -1,7 +1,7 @@
 #!/bin/sh
 ##################################################################################
-# Version	: 1.02			#
-# Date		: 2021-01-09		#
+# Version	: 1.03			#
+# Date		: 2021-01-21		#
 # Author	: yungvenuz		#
 # Conact	: 5196666qwe@email.com	#
 ##################################################################################
@@ -93,7 +93,7 @@ Install() {
 
 # install some packages
 # yes | Install git zsh jq proxytunnel autojump
-yes | Install git zsh jq  ag mycli tmux axel lrzsz glances 
+yes | Install git zsh jq ag unzip mycli tmux axel lrzsz glances 
 
 # config git
 log "${BLUE}config ${FUCHSIA}git${BLUE}..."
@@ -156,11 +156,6 @@ if type 'nvs' 2>/dev/null | grep -q 'function'; then
         nvs link lts
 
         npm install -g cnpm --registry=https://registry.npmmirror.com
-
-
-        # cnpm i -g lazycommit
-        # cnpm i -g lazyclone
-        cnpm i -g pm2
     fi
 fi
 
@@ -233,27 +228,15 @@ services:
     hostname: "${MYSQL_NAME}"
     environment:
       MYSQL_ROOT_PASSWORD: "${MYSQL_ROOT_PASSWORD}"
+      MYSQL_ROOT_HOST: '%' # 允许host为任意
     restart: always
+    command: mysqld --default-authentication-plugin=mysql_native_password --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
     volumes:
-      - "${DIR_MYSQL_CONF}:/etc/mysql/conf.d"
-      - "${DIR_MYSQL_DATA}:/var/lib/mysql"
       - "${DIR_MYSQL_INIT_SCRIPTS}:/docker-entrypoint-initdb.d/"
+      - "${DIR_MYSQL_DATA}:/var/lib/mysql"
+      - "${DIR_MYSQL_CONF}:/etc/mysql/conf.d"
     ports:
       - "${MYSQL_PORT_MAPPING}:3306"
-  redis:
-    image: redis
-    network_mode: "${DOCKER_NETWORK}"
-    container_name: "${REDIS_NAME}"
-    hostname: "${REDIS_NAME}"
-    restart: always
-    command: redis-server
-    # 设置密码和开启AOF
-
-    #command: redis-server --requirepass ${REDIS_PASSWORD} --appendonly yes
-    volumes:
-      - "${DIR_REDIS_DATA}:/data"
-    ports:
-      - "${REDIS_PORT_MAPPING}:6379"
   mongo:
     image: 'mongo:${MONGO_VERSION}'
     network_mode: "${DOCKER_NETWORK}"
@@ -276,6 +259,33 @@ services:
       - "${MONGO_PORT_MAPPING}:27017"
     #这是覆盖掉默认启动命令让mongo不用认证。 如果用这个命令启动上边的超级用户配置要先删掉，不然启动报错
     #command: ["mongod","--noauth"]
+  postgres:
+    image: postgres
+    network_mode: "${DOCKER_NETWORK}"
+    container_name: "${POSTGRES_NAME}"
+    environment:
+      POSTGRES_DB: "postgres"
+      POSTGRES_USER: "${POSTGRES_USER}"
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD}"
+    restart: always
+    volumes:
+      - "${DIR_MONGO_INIT_SCRIPTS}:/docker-entrypoint-initdb.d:ro"
+      - "${DIR_POSTGRES_DATA}:/var/lib/postgresql/data:rw"
+    ports:
+      - "${POSTGRES_PORT_MAPPING}:5432"
+  redis:
+    image: redis
+    network_mode: "${DOCKER_NETWORK}"
+    container_name: "${REDIS_NAME}"
+    hostname: "${REDIS_NAME}"
+    restart: always
+    command: redis-server
+    # 设置密码和开启AOF
+    #command: redis-server --requirepass ${REDIS_PASSWORD} --appendonly yes
+    volumes:
+      - "${DIR_REDIS_DATA}:/data"
+    ports:
+      - "${REDIS_PORT_MAPPING}:6379"
   nginx:
     image: nginx
     restart: always
@@ -288,7 +298,7 @@ services:
       - "${DIR_NGINX_CONF}:/etc/nginx/nginx.conf"
       - "${DIR_NGINX_CONF_DIR}:/etc/nginx/conf.d"
       - "${DIR_NGINX_LOGS}:/var/log/nginx"
-      - "${DIR_NGINX_HTML}:/usr/share/nginx/html"
+      - "${DIR_NGINX_HTML}:/etc/nginx/html"
       - "${DIR_NGINX_HOME}:/home/www"
 EOL
 
@@ -305,6 +315,18 @@ DIR_MYSQL_CONF=/opt/dockerdata/mysql/conf
 DIR_MYSQL_DATA=/opt/dockerdata/mysql/data
 # 这个目录里的.sql/.sh 文件会在容器启动时被扫描执行
 DIR_MYSQL_INIT_SCRIPTS=/opt/dockerdata/mysql/init
+
+# postgres
+POSTGRES_NAME=postgres
+# POSTGRES_VERSION=14.0
+POSTGRES_USER=postgres
+POSTGRES_PASSWORD=justfortest_tmac_forever
+POSTGRES_PORT_MAPPING=5432
+DIR_POSTGRES_CONF=/opt/dockerdata/postgres/conf
+DIR_POSTGRES_DATA=/opt/dockerdata/postgres/data
+# 这个目录里的.sql/.sh 文件会在容器启动时被扫描执行
+DIR_POSTGRES_INIT_SCRIPTS=/opt/dockerdata/postgres/init
+
 
 # redis
 REDIS_NAME=redis
@@ -392,17 +414,17 @@ http {
 	    index        index.html;
         #charset koi8-r;
 
-	location /images/ {
-        root /root/crm/;
-	    autoindex on;
-	    log_not_found on;
-	    access_log on;
-	    # 缓存七天
-	    expires 7d;
-	}
+        location /images/ {
+            root /root/crm/;
+            autoindex on;
+            log_not_found on;
+            access_log on;
+            # 缓存七天
+            expires 7d;
+        }
 
 
-	#location ~* ^.+\.(jpg|jpeg|gif|png|bmp|js|css)$ {
+	    #location ~* ^.+\.(jpg|jpeg|gif|png|bmp|js|css)$ {
         	#access_log off;
         	#root html;
         	#expires 30d;
@@ -410,46 +432,50 @@ http {
         #}
 
 
-	location /static {
-		root /home/www/;
-	}
+        location /static {
+            # /home/www/static
+            alias /home/www;
+            autoindex on;
+        }
 
-    location ~ \.txt$ {
-        root /home/www/static/;
-    }
-
-
-	location /erp/ {
-	     proxy_pass http://127.0.0.1:3001/;
-	     proxy_redirect off;
-	     proxy_set_header X-Real-IP $remote_addr;
-             proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-	}
-
-	location /cdn {
-		rewrite /(.+)$ /$1 break; 
-		proxy_pass https://hzxiaoliang.oss-cn-zhangjiakou.aliyuncs.com;
-	}
-	
-	location ~ ^(.+\.php)(.*)$ {
-	     root              /var/www;
-	     fastcgi_pass 172.17.0.6:9000;
-	     fastcgi_index  index.php;
-	     fastcgi_split_path_info  ^(.+\.php)(.*)$;
-	     fastcgi_param PATH_INFO $fastcgi_path_info;
-	     if (!-e $document_root$fastcgi_script_name) {
-		 return 404;
-	     }
-	     fastcgi_param  SCRIPT_FILENAME  $document_root$fastcgi_script_name;
-	     include        fastcgi_params;
-	}
+        #location ~ \.txt$ {
+            #root /home/www/;
+            #alias /home/www;
+            #autoindex on;
+        #}
 
 
-	#location ~* ^.+\.(jpg|jpeg|png)$ {
-	#}
+        location /erp/ {
+            proxy_pass http://127.0.0.1:3001/;
+            proxy_redirect off;
+            proxy_set_header X-Real-IP $remote_addr;
+                proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        }
+
+        location /cdn {
+            rewrite /(.+)$ /$1 break; 
+            proxy_pass https://hzxiaoliang.oss-cn-zhangjiakou.aliyuncs.com;
+        }
+        
+        location ~ ^(.+\.php)(.*)$ {
+            root              /var/www;
+            fastcgi_pass 172.17.0.6:9000;
+            fastcgi_index  index.php;
+            fastcgi_split_path_info  ^(.+\.php)(.*)$;
+            fastcgi_param PATH_INFO $fastcgi_path_info;
+            if (!-e $document_root$fastcgi_script_name) {
+            return 404;
+            }
+            fastcgi_param  SCRIPT_FILENAME  $document_root$fastcgi_script_name;
+            include        fastcgi_params;
+        }
 
 
-    #access_log  logs/host.access.log  main;
+        #location ~* ^.+\.(jpg|jpeg|png)$ {
+        #}
+
+
+        #access_log  logs/host.access.log  main;
 
     }
 
@@ -460,7 +486,7 @@ http {
 EOL
 
 
-    cat > /opt/dockerdata/nginx/nginx.conf <<"EOL"
+    cat > /opt/dockerdata/nginx/html/index.html<<"EOL"
 <h1>just for test</h1>
 EOL
 fi
@@ -499,6 +525,10 @@ if [[ ! -d "$HOME/.oh-my-zsh" ]]; then
         npm config set prefix ~/.npm-global
         export PATH=$HOME/.npm-global/bin:$PATH
         echo "export PATH=~/.npm-global/bin:$PATH" >>~/.zshrc
+
+        # cnpm i -g lazycommit
+        # cnpm i -g lazyclone
+        cnpm i -g pm2
     fi
 
     # install zsh-autosuggestions
