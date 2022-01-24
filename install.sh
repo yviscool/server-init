@@ -540,7 +540,8 @@ if [[ ! -d "$HOME/.oh-my-zsh" ]]; then
     git clone https://gitee.com/simonliu009/zsh-syntax-highlighting ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting
 
     # config zsh plugins
-    sed -i.bak 's/^plugins=(\(.*\)/plugins=(vi-mode z colored-man-pages extract zsh-autosuggestions zsh-syntax-highlighting \1/' ~/.zshrc
+    sed -i.bak 's/^plugins=(\(.*\)/plugins=(tmux zsh_reload vi-mode z colored-man-pages extract zsh-autosuggestions zsh-syntax-highlighting \1/' ~/.zshrc
+
 
     # switch to zsh shell
     zsh
