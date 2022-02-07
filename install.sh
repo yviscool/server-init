@@ -300,6 +300,10 @@ services:
       - "${DIR_NGINX_LOGS}:/var/log/nginx"
       - "${DIR_NGINX_HTML}:/etc/nginx/html"
       - "${DIR_NGINX_HOME}:/home/www"
+    extra_hosts:
+      # docker version 20 above support host-gateway
+      # otherwise use ifconfig eth0 | grep inet | grep -v inet6 | awk '{print $2}' or 172.17.0.1
+      - 'host.docker.internal:host-gateway'
 EOL
 
     log "${BLUE}write ${FUCHSIA}docker-compose env..."
@@ -447,6 +451,7 @@ http {
 
         location /erp/ {
             proxy_pass http://127.0.0.1:3001/;
+	    # proxy_pass http://host.docker.internal:3001/;
             proxy_redirect off;
             proxy_set_header X-Real-IP $remote_addr;
                 proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
