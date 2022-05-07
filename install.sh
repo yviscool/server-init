@@ -279,9 +279,9 @@ services:
     container_name: "${REDIS_NAME}"
     hostname: "${REDIS_NAME}"
     restart: always
-    command: redis-server
+    #command: redis-server
     # 设置密码和开启AOF
-    #command: redis-server --requirepass ${REDIS_PASSWORD} --appendonly yes
+    command: redis-server --requirepass ${REDIS_PASSWORD} --appendonly yes
     volumes:
       - "${DIR_REDIS_DATA}:/data"
     ports:
