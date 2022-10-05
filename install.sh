@@ -156,6 +156,9 @@ if type 'nvs' 2>/dev/null | grep -q 'function'; then
         nvs link lts
 
         npm install -g cnpm --registry=https://registry.npmmirror.com
+	npm install -g pnpm --registry=https://registry.npmmirror.com
+	npm install -g yarn --registry=https://registry.npmmirror.com
+	pnpm config registry https://registry.npm.taobao.org
     fi
 fi
 
