@@ -537,6 +537,7 @@ if [[ ! -d "$HOME/.oh-my-zsh" ]]; then
         npm config set prefix ~/.npm-global
         export PATH=$HOME/.npm-global/bin:$PATH
         echo "export PATH=~/.npm-global/bin:$PATH" >>~/.zshrc
+	pnpm config set global-bin-dir $HOME/.npm-global/bin
 
         # cnpm i -g lazycommit
         # cnpm i -g lazyclone
