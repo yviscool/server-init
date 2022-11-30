@@ -189,6 +189,7 @@ if [[  -x "$(command -v docker)" ]]; then
 {
     "registry-mirrors": [
         "https://ustc-edu-cn.mirror.aliyuncs.com",
+	"https://mirror.ccs.tencentyun.com",
         "https://docker.mirrors.sjtug.sjtu.edu.cn",
         "https://mirror.baidubce.com",
         "https://hub-mirror.c.163.com"
