@@ -93,7 +93,7 @@ Install() {
 
 # install some packages
 # yes | Install git zsh jq proxytunnel autojump
-yes | Install git zsh jq ag unzip mycli tmux axel lrzsz glances 
+yes | Install git zsh jq ag unzip mycli tmux axel lrzsz glances
 
 # config git
 log "${BLUE}config ${FUCHSIA}git${BLUE}..."
@@ -175,7 +175,10 @@ if [[ ! -x "$(command -v docker)" ]]; then
     log "${BLUE}Installing ${FUCHSIA}docker${BLUE}..."
     # curl -fsSL https://get.docker.com | bash -s docker --mirror Aliyun
     # curl -fsSL https://get.docker.com | bash -s docker 
-    curl -sSL https://get.daocloud.io/docker | bash -s docker --mirror Aliyun
+    # curl -sSL https://get.daocloud.io/docker | bash -s docker --mirror Aliyun
+    dnf config-manager --add-repo=http://mirrors.tencent.com/docker-ce/linux/centos/docker-ce.repo
+    dnf install -y docker-ce --nobest
+
     usermod -aG docker $USER
     systemctl enable docker
     systemctl start docker
@@ -416,23 +419,23 @@ http {
     gzip_disable "MSIE [1-6]\.";
 
     server {
-        listen       80;
+        listen       80 ;
         server_name  localhost;
 	    #root         /root/static;
 	    index        index.html;
         #charset koi8-r;
 
-        location /images/ {
-            root /root/crm/;
-            autoindex on;
-            log_not_found on;
-            access_log on;
-            # 缓存七天
-            expires 7d;
-        }
+	location /images/ {
+         	root /root/crm/;
+	    autoindex on;
+	    log_not_found on;
+	    access_log on;
+	    # 缓存七天
+	    expires 7d;
+	}
 
 
-	    #location ~* ^.+\.(jpg|jpeg|gif|png|bmp|js|css)$ {
+	#location ~* ^.+\.(jpg|jpeg|gif|png|bmp|js|css)$ {
         	#access_log off;
         	#root html;
         	#expires 30d;
@@ -440,60 +443,76 @@ http {
         #}
 
 
-        location /static {
-            # /home/www/static
-            alias /home/www;
-            autoindex on;
-        }
-
-        #location ~ \.txt$ {
-            #root /home/www/;
-            #alias /home/www;
-            #autoindex on;
-        #}
-
-
-        location /erp/ {
-            proxy_pass http://127.0.0.1:3001/;
-	    # proxy_pass http://host.docker.internal:3001/;
-            proxy_redirect off;
-            proxy_set_header X-Real-IP $remote_addr;
-                proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        }
-
-        location /cdn {
-            rewrite /(.+)$ /$1 break; 
-            proxy_pass https://hzxiaoliang.oss-cn-zhangjiakou.aliyuncs.com;
-        }
-        
-        location ~ ^(.+\.php)(.*)$ {
-            root              /var/www;
-            fastcgi_pass 172.17.0.6:9000;
-            fastcgi_index  index.php;
-            fastcgi_split_path_info  ^(.+\.php)(.*)$;
-            fastcgi_param PATH_INFO $fastcgi_path_info;
-            if (!-e $document_root$fastcgi_script_name) {
-            return 404;
-            }
-            fastcgi_param  SCRIPT_FILENAME  $document_root$fastcgi_script_name;
-            include        fastcgi_params;
-        }
-	
-	location /robots.txt {
-   		return 200 "User-agent: *\nDisallow: /\n"
+	location /static {
+		#root /home/www/;
+		alias /home/www;
+		autoindex on;
 	}
 
-        #location ~* ^.+\.(jpg|jpeg|png)$ {
-        #}
+	#location ~ \.txt$ {
+	    # root /home/www/;
+            #alias /home/www;
+            #autoindex on;
+	#}
 
 
-        #access_log  logs/host.access.log  main;
+	location /erp/ {
+	     proxy_pass http://host.docker.internal:3001/;
+	     #proxy_pass http://172.17.87.184:3001/;
+	     proxy_redirect off;
+	     proxy_set_header X-Real-IP $remote_addr;
+             proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+	}
+
+	location /etm/ {
+	     # ifconfig eth0 | grep inet | grep -v inet6 | awk '{print $2}'
+	     proxy_pass http://host.docker.internal:3001/;
+	     #proxy_pass http://172.17.87.184:3001/;
+	     proxy_redirect off;
+	     proxy_set_header X-Real-IP $remote_addr;
+             proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+	}
+
+	location /cdn {
+		rewrite /(.+)$ /$1 break; 
+		proxy_pass https://hzxiaoliang.oss-cn-zhangjiakou.aliyuncs.com;
+	}
+
+	location /txtype {
+		rewrite ^/(.*) https://my-bucket-xrfferp-1253480735.cos-website.ap-shanghai.myqcloud.com;
+	}
+	
+	location ~ ^(.+\.php)(.*)$ {
+	     root              /var/www;
+	     fastcgi_pass 172.17.0.6:9000;
+	     fastcgi_index  index.php;
+	     fastcgi_split_path_info  ^(.+\.php)(.*)$;
+	     fastcgi_param PATH_INFO $fastcgi_path_info;
+	     if (!-e $document_root$fastcgi_script_name) {
+		 return 404;
+	     }
+	     fastcgi_param  SCRIPT_FILENAME  $document_root$fastcgi_script_name;
+	     include        fastcgi_params;
+	}
+
+	location = /robots.txt {
+	   add_header Content-Type text/plain;
+	   return 200 "User-agent: *\nDisallow: /\n";
+	}
+
+
+	#location ~* ^.+\.(jpg|jpeg|png)$ {
+	#}
+
+
+    #access_log  logs/host.access.log  main;
 
     }
 
 
 
 }
+
 
 EOL
 
@@ -526,7 +545,8 @@ if [[ ! -d "$HOME/.oh-my-zsh" ]]; then
     # yes | sh -c "$(curl -fsSL 'https://gitee.com/mirrors/oh-my-zsh/blob/master/tools/install.sh')" # gitee
     yes | sh -c "$(curl -fsSL https://gitee.com/wosi/ohmyzsh/raw/master/tools/install.sh)" # gitee
     # change default shell
-    chsh -s /bin/zsh
+    usermod -s /bin/zsh root
+    /bin/zsh
 
     # config nvs in zsh
     echo "export NVS_HOME=$HOME/.nvs" >>~/.zshrc
