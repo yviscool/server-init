@@ -1,193 +1,198 @@
 #!/bin/sh
 ##################################################################################
-# Version	: 1.03			#
-# Date		: 2021-01-21		#
-# Author	: yungvenuz		#
-# Conact	: 5196666qwe@email.com	#
+# Version	: 1.50								#
+# Date		: 2023-07-09							#
+# Author	: yungvenuz							#
+# Conact	: 5196666qwe@email.com						#
 ##################################################################################
-# Colors
+# 定义颜色变量
 NOCOLOR='\033[0m'
-RED='\033[0;31m'        # Error message
-LIGHTRED='\033[1;31m'
-GREEN='\033[0;32m'      # Success message
-LIGHTGREEN='\033[1;32m'
-ORANGE='\033[0;33m'
-YELLOW='\033[1;33m'     # Warning message
-BLUE='\033[0;34m'       # Info message
-LIGHTBLUE='\033[1;34m'
-PURPLE='\033[0;35m'
-FUCHSIA='\033[0;35m'
-LIGHTPURPLE='\033[1;35m'
-CYAN='\033[0;36m'
-LIGHTCYAN='\033[1;36m'
-DARKGRAY='\033[1;30m'
-LIGHTGRAY='\033[0;37m'
-WHITE='\033[1;37m'
+RED='\033[0;31m'        # 错误信息
+GREEN='\033[0;32m'      # 成功信息
+BLUE='\033[0;34m'       # 信息提示
 
-function log() {
-    if [[ $# -gt 1 ]]; then
-        local COLOR=$1
-        echo -e "${COLOR}${@:2}${NOCOLOR}"
-    else
-        echo -e "${@:1}${NOCOLOR}"
-    fi
+# 输出带颜色的日志信息
+log() {
+  if [[ $# -gt 1 ]]; then
+    local COLOR=$1
+    echo -e "${COLOR}${@:2}${NOCOLOR}"
+  else
+    echo -e "${@:1}${NOCOLOR}"
+  fi
 }
-##################################################################################
-path=$(echo $PATH | sed 's/:/ /g')
 
-# get package manager name
-for file in $(find $path -maxdepth 1); do
+##################################################################################
+# 安装和配置软件包管理器
+##################################################################################
+
+# 设置默认的包管理器
+Install=""
+Update=""
+
+# 获取系统的环境变量PATH，并根据不同的包管理器设置安装和更新命令
+setup_package_manager() {
+  path=$(echo $PATH | sed 's/:/ /g')
+
+  for file in $(find $path -maxdepth 1); do
     case ${file##*/} in
-    apk)
+      apk)
         Install="apk add"
         Update="apk update"
         ;;
-    apt | dnf | pkg | slackpkg | yum | zypper)
+      apt | dnf | pkg | slackpkg | yum | zypper)
         Install="${file##*/} install"
         Update="${file##*/} update"
         ;;
-    nix-env | pkgutil)
+      nix-env | pkgutil)
         Install="${file##*/} -i"
         Update="${file##*/} -u"
         ;;
-    pacman | powerpill | yay)
+      pacman | powerpill | yay)
         Install="${file##*/} -S"
         Update="${file##*/} -Syu"
         ;;
-    urpmi)
+      urpmi)
         Install="urpmi"
         Update="urpmi --auto-select"
         ;;
-    *) ;;
+      *)
+        ;;
     esac
-done
-if [[ ! $Install ]]; then
+  done
+
+  if [[ ! $Install ]]; then
     case $LANG in
-    zh_CN*) log "${RED}无法识别您的包管理器！" ;;
-    zh_TW*) log "${RED}無法識別您的包管理器！" ;;
-    *) log "${RED}Unable to identify your package management!" ;;
+      zh_CN*) log "${RED}无法识别您的包管理器！" ;;
+      zh_TW*) log "${RED}無法識別您的包管理器！" ;;
+      *) log "${RED}无法识别您的包管理器！" ;;
     esac
-    exits
-fi
-
-# update package
-case $LANG in
-zh_*) log "${GREEN} 正在更新..." ;;
-*) log "${GREEN} Updating..." ;;
-esac
-yes | sh -c "$Update"
-
-# install package function
-Install() {
-    for package in $*; do
-        if [[ ! $(find $path -maxdepth 1 -name $package) ]]; then
-            case $LANG in
-            zh_CN*) log "${GREEN} 正在安装$package..." ;;
-            zh_TW*) log "${GREEN} 正在安裝$package..." ;;
-            *) log "${GREEN} Installing $package..." ;;
-            esac
-            sh -c "$Install $package"
-        fi
-    done
+    exit 1
+  fi
 }
 
-# install some packages
-# yes | Install git zsh jq proxytunnel autojump
-yes | Install git zsh jq ag unzip mycli tmux axel lrzsz glances
-
-# config git
-log "${BLUE}config ${FUCHSIA}git${BLUE}..."
-git config --global user.name "YungVenuz"
-git config --global user.email "5196666qwe@gmail.com"
+# 更新系统的软件包
+update_packages() {
+  case $LANG in
+    zh_*) log "${GREEN}正在更新软件包..." ;;
+    *) log "${GREEN}Updating packages..." ;;
+  esac
+  yes | sh -c "$Update"
+}
 
 ##################################################################################
-# node.js version manager
-# node.js version manager
-# node.js version manager
-# node.js version manager
+# 安装和配置工具
 ##################################################################################
 
-# node version manager (nvm)
-# curl -o- https://raw.githubusercontent.com/creationix/nvm/v0.33.6/install.sh | bash
-# echo 'export NVM_DIR="$HOME/.nvm"' >> ~/.zshrc
-# echo '[ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh" # This loads nvm' >> ~/.zshrc
-# source ~/.zshrc
-# nvm install stable
-# nvm alias default node
+# 安装指定的软件包
+install_package() {
+  local package=$1
+  local package_name=$(basename $package)
 
-# node version manager (nvs)
-# install nvs
-if [[ ! -d "$HOME/.nvs" ]]; then
-    export NVS_HOME="$HOME/.nvs"
-    # git clone https://github.com/jasongin/nvs --depth=1 "$NVS_HOME" # abroad
-    git clone https://gitee.com/wsz7777/nvs --depth=1 "$NVS_HOME" # china
-    . "$NVS_HOME/nvs.sh" install
-fi
+  # 检查是否已安装该软件包
+  if [[ ! $(find $path -maxdepth 1 -name $package_name) ]]; then
+    case $LANG in
+      zh_CN*) log "${GREEN}正在安装$package_name..." ;;
+      zh_TW*) log "${GREEN}正在安裝$package_name..." ;;
+      *) log "${GREEN}Installing $package_name..." ;;
+    esac
+    sh -c "$Install $package"
+  fi
+}
 
-# nvs remote aliyun node
-if [[ -d "$HOME/.nvs" ]]; then
+# 安装常用工具
+install_tools() {
+  # 使用数组存储需要安装的工具包
+  local tools=(
+    "git"
+    "zsh"
+    "jq"
+    "ag"
+    "unzip"
+    "mycli"
+    "tmux"
+    "axel"
+    "lrzsz"
+    "glances"
+  )
+
+  # 循环安装工具包
+  for tool in "${tools[@]}"; do
+    install_package $tool
+  done
+}
+
+# 配置git
+config_git() {
+  log "${BLUE}配置${FUCHSIA}git${BLUE}..."
+  git config --global user.name "YungVenuz"
+  git config --global user.email "5196666qwe@gmail.com"
+}
+
+##################################################################################
+# 安装和配置Node.js版本管理器
+##################################################################################
+
+install_nvs() {
+  local nvs_dir="$HOME/.nvs"
+
+  if [[ ! -d "$nvs_dir" ]]; then
+    export NVS_HOME="$nvs_dir"
+    git clone https://gitee.com/wsz7777/nvs --depth=1 "$nvs_dir"
+    . "$nvs_dir/nvs.sh" install
+  fi
+
+  if [[ -d "$nvs_dir" ]]; then
     if type 'nvs' 2>/dev/null | grep -q 'function'; then
-        :
+      :
     else
-        export NVS_HOME="$HOME/.nvs"
-        [ -s "$NVS_HOME/nvs.sh" ] && . "$NVS_HOME/nvs.sh"
+      export NVS_HOME="$nvs_dir"
+      [ -s "$NVS_HOME/nvs.sh" ] && . "$NVS_HOME/nvs.sh"
     fi
 
-    # if [[ "${THE_WORLD_BLOCKED}" == "true" ]]; then
     nvs remote node https://npmmirror.com/mirrors/node/
-    # fi
-
     mkdir -p ~/.npm-global
-fi
+  fi
+}
 
-
-## Install nodejs
-if type 'nvs' 2>/dev/null | grep -q 'function'; then
+# 安装Node.js和一些全局包管理工具
+install_nodejs() {
+  if type 'nvs' 2>/dev/null | grep -q 'function'; then
     if [[ ! "$(command -v node)" ]]; then
-        log "${BLUE} Installing ${FUCHSIA}node LTS..."
-        nvs add lts
+      log "${BLUE}正在安装${FUCHSIA}Node.js LTS版本..."
+      nvs add lts
 
-        log "${BLUE} Installing ${FUCHSIA}node latest..."
-        nvs add latest
+      log "${BLUE}正在安装${FUCHSIA}最新版本的Node.js..."
+      nvs add latest
 
-        # nvs use latest
-        # nvs link latest
-        nvs use lts
-        nvs link lts
+      nvs use lts
+      nvs link lts
 
-        npm install -g cnpm --registry=https://registry.npmmirror.com
-	npm install -g pnpm --registry=https://registry.npmmirror.com
-	npm install -g yarn --registry=https://registry.npmmirror.com
-	pnpm config registry https://registry.npm.taobao.org
+      npm install -g cnpm --registry=https://registry.npmmirror.com
+      npm install -g pnpm --registry=https://registry.npmmirror.com
+      npm install -g yarn --registry=https://registry.npmmirror.com
+      pnpm config registry https://registry.npm.taobao.org
     fi
-fi
+  fi
+}
 
 
 ##################################################################################
-# docker, docker-compose
-# docker, docker-compose
-# docker, docker-compose
-# docker, docker-compose
+# 安装和配置Docker及相关工具
 ##################################################################################
-
-# install docker
-if [[ ! -x "$(command -v docker)" ]]; then
-    log "${BLUE}Installing ${FUCHSIA}docker${BLUE}..."
-    # curl -fsSL https://get.docker.com | bash -s docker --mirror Aliyun
-    # curl -fsSL https://get.docker.com | bash -s docker 
-    # curl -sSL https://get.daocloud.io/docker | bash -s docker --mirror Aliyun
+# 安装Docker
+install_docker() {
+  if [[ ! -x "$(command -v docker)" ]]; then
+    log "${BLUE}正在安装${FUCHSIA}Docker${BLUE}..."
     dnf config-manager --add-repo=http://mirrors.tencent.com/docker-ce/linux/centos/docker-ce.repo
     dnf install -y docker-ce --nobest
 
     usermod -aG docker $USER
     systemctl enable docker
     systemctl start docker
-fi
+  fi
 
-
-if [[  -x "$(command -v docker)" ]]; then
-    log "${BLUE}confing${FUCHSIA}docker mirror${BLUE}..."
-    # config docker mirror 
+  if [[ -x "$(command -v docker)" ]]; then
+    log "${BLUE}配置${FUCHSIA}Docker镜像源${BLUE}..."
     cat  > /etc/docker/daemon.json <<EOL
 {
     "registry-mirrors": [
@@ -199,33 +204,34 @@ if [[  -x "$(command -v docker)" ]]; then
     ]
 }
 EOL
-
-    log "${BLUE}restart${FUCHSIA}docker${BLUE} service"
+    log "${BLUE}重启${FUCHSIA}Docker${BLUE}服务"
     systemctl daemon-reload
     systemctl restart docker
-fi
+  fi
+}
 
 
-# intall docker-compose
-if [[ ! -x "$(command -v docker-compose)" ]]; then
-    log "${BLUE}Installing ${FUCHSIA}docker-compose${BLUE}..."
-    # curl -L "https://github.com/docker/compose/releases/download/2.2.3/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-    curl -L https://get.daocloud.io/docker/compose/releases/download/v2.2.3/docker-compose-`uname -s`-`uname -m` > /usr/local/bin/docker-compose
+# 安装Docker Compose
+install_docker_compose() {
+  if [[ ! -x "$(command -v docker-compose)" ]]; then
+    log "${BLUE}正在安装${FUCHSIA}Docker Compose${BLUE}..."
+    curl -L https://get.daocloud.io/docker/compose/releases/download/v2.2.3/docker-compose-$(uname -s)-$(uname -m) > /usr/local/bin/docker-compose
     chmod +x /usr/local/bin/docker-compose
-fi
+  fi
+}
 
 
 
-# config docker-compose, such as compose-file, env-file, nginx-conf
-if [[ ! -d "$HOME/docker-compose" ]]; then
+# 配置Docker Compose和相关文件
+configure_docker_compose() {
+  local compose_dir="$HOME/docker-compose"
 
-    # create docker-compose directory
-    log "${BLUE}Creating ${FUCHSIA}docker-compose${BLUE} directory..."
-    mkdir -p "$HOME/docker-compose"
+  if [[ ! -d "$compose_dir" ]]; then
+    log "${BLUE}创建${FUCHSIA}Docker Compose${BLUE}目录..."
+    mkdir -p "$compose_dir"
 
-
-    log "${BLUE}write ${FUCHSIA}docker-compose.yml..."
-    cat  > $HOME/docker-compose/docker-compose.yml  <<"EOL"
+    log "${BLUE}写入${FUCHSIA}docker-compose.yml${BLUE}文件..."
+    cat > $compose_dir/docker-compose.yml  <<"EOL"
 version: '3.7'
 services:
   mysql:
@@ -313,8 +319,8 @@ services:
       - 'host.docker.internal:host-gateway'
 EOL
 
-    log "${BLUE}write ${FUCHSIA}docker-compose env..."
-    cat > $HOME/docker-compose/.env <<"EOL"
+    log "${BLUE}写入${FUCHSIA}.env${BLUE}文件..."
+    cat > $compose_dir/.env <<"EOL"
 DOCKER_NETWORK=bridge
 
 # mysql
@@ -372,7 +378,7 @@ EOL
 
     mkdir -p /opt/dockerdata/nginx/html
 
-    log "${BLUE}write ${FUCHSIA}nginx.conf..."
+    log "${BLUE}写入${FUCHSIA}nginx.conf${BLUE}文件..."
     cat > /opt/dockerdata/nginx/nginx.conf <<"EOL"
 
 user  root;
@@ -517,66 +523,90 @@ http {
 EOL
 
 
-    cat > /opt/dockerdata/nginx/html/index.html<<"EOL"
+    cat > /opt/dockerdata/nginx/html/index.html <<"EOL"
 <h1>just for test</h1>
 EOL
-fi
+  fi
+}
 
 
-# docker-compose up -d
-if [[ -x "$(command -v docker-compose)" ]]; then
-    log "${BLUE}up ${FUCHSIA}docker-compose${BLUE}..."
+# 启动Docker Compose服务
+start_docker_compose() {
+  if [[ -x "$(command -v docker-compose)" ]]; then
+    log "${BLUE}启动${FUCHSIA}Docker Compose${BLUE}服务..."
     cd ${HOME}/docker-compose
     docker-compose up -d
-fi
+  fi
+}
 
 
 ##################################################################################
-# oh-my-zsh
-# oh-my-zsh
-# oh-my-zsh
-# oh-my-zsh
+# 安装和配置Oh-My-Zsh
 ##################################################################################
-# Install oh-my-zsh
-if [[ ! -d "$HOME/.oh-my-zsh" ]]; then
-    log "${BLUE} Installing ${FUCHSIA}oh-my-zsh..."
-    # yes | sh -c "$(curl -fsSL https://raw.github.com/robbyrussell/oh-my-zsh/master/tools/install.sh)" # github
-    # yes | sh -c "$(curl -fsSL 'https://cdn.jsdelivr.net/gh/ohmyzsh/ohmyzsh@master/tools/install.sh')" # gitee
-    # yes | sh -c "$(curl -fsSL 'https://gitee.com/mirrors/oh-my-zsh/blob/master/tools/install.sh')" # gitee
-    yes | sh -c "$(curl -fsSL https://gitee.com/wosi/ohmyzsh/raw/master/tools/install.sh)" # gitee
-    # change default shell
+# 安装Oh-My-Zsh
+install_oh_my_zsh() {
+  if [[ ! -d "$HOME/.oh-my-zsh" ]]; then
+    log "${BLUE}正在安装${FUCHSIA}Oh-My-Zsh${BLUE}..."
+    yes | sh -c "$(curl -fsSL https://gitee.com/wosi/ohmyzsh/raw/master/tools/install.sh)"
+
+    # 切换默认Shell为Zsh
     usermod -s /bin/zsh root
     /bin/zsh
 
-    # config nvs in zsh
-    echo "export NVS_HOME=$HOME/.nvs" >>~/.zshrc
-    echo "[ -s $NVS_HOME/nvs.sh ] && . $NVS_HOME/nvs.sh" >>~/.zshrc
+    # 配置NVS在Zsh中
+    echo "export NVS_HOME=$HOME/.nvs" >> ~/.zshrc
+    echo "[ -s $NVS_HOME/nvs.sh ] && . $NVS_HOME/nvs.sh" >> ~/.zshrc
 
-    # create npm global directory
+    # 创建NPM全局目录
     if [[ -d "$HOME/.npm-global" ]]; then
-        npm config set prefix ~/.npm-global
-        export PATH=$HOME/.npm-global/bin:$PATH
-        echo "export PATH=~/.npm-global/bin:$PATH" >>~/.zshrc
-	pnpm config set global-bin-dir $HOME/.npm-global/bin
+      npm config set prefix ~/.npm-global
+      export PATH=$HOME/.npm-global/bin:$PATH
+      echo "export PATH=~/.npm-global/bin:$PATH" >> ~/.zshrc
+      pnpm config set global-bin-dir $HOME/.npm-global/bin
 
-        # cnpm i -g lazycommit
-        # cnpm i -g lazyclone
-        cnpm i -g pm2
+      # 安装一些全局包
+      cnpm i -g pm2
     fi
 
-    # install zsh-autosuggestions
-    # git clone https://github.com/zsh-users/zsh-autosuggestions ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions
+    # 安装zsh-autosuggestions插件
     git clone https://gitee.com/dictxiong/zsh-autosuggestions ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions
 
-    # install zsh-syntax-highlighting
-    # git clone https://github.com/zsh-users/zsh-syntax-highlighting.git ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting
+    # 安装zsh-syntax-highlighting插件
     git clone https://gitee.com/simonliu009/zsh-syntax-highlighting ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting
 
-    # config zsh plugins
-    sed -i.bak 's/^plugins=(\(.*\)/plugins=(tmux zsh_reload vi-mode z colored-man-pages extract zsh-autosuggestions zsh-syntax-highlighting \1/' ~/.zshrc
-
-
-    # switch to zsh shell
-    zsh
+    # 配置zsh插件
+    sed -i.bak 's/^plugins=(\(.*\))/plugins=(git zsh-autosuggestions zsh-syntax-highlighting)/' ~/.zshrc
     source ~/.zshrc
-fi
+  fi
+}
+
+
+##################################################################################
+# 主程序入口
+##################################################################################
+
+# 设置默认包管理器
+setup_package_manager
+
+# 更新系统软件包
+update_packages
+
+# 安装和配置工具
+install_tools
+config_git
+
+# 安装和配置Node.js版本管理器
+install_nvs
+install_nodejs
+
+# 安装和配置Docker及相关工具
+install_docker
+install_docker_compose
+configure_docker_compose
+start_docker_compose
+
+# 安装和配置Oh-My-Zsh
+install_oh_my_zsh
+
+# 完成安装
+log "${GREEN}安装和配置完成！"
