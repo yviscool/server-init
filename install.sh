@@ -550,7 +550,7 @@ start_docker_compose() {
 install_oh_my_zsh() {
   if [[ ! -d "$HOME/.oh-my-zsh" ]]; then
     log "${BLUE}正在安装${FUCHSIA}Oh-My-Zsh${BLUE}..."
-    yes | sh -c "$(curl -fsSL https://mirror.ghproxy.com/ohmyzsh/ohmyzsh/raw/master/tools/install.sh)"
+    yes | sh -c "$(curl -fsSL https://mirror.ghproxy.com/https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
 
     # 切换默认Shell为Zsh
     usermod -s /bin/zsh root
@@ -572,10 +572,10 @@ install_oh_my_zsh() {
     fi
 
     # 安装zsh-autosuggestions插件
-    git clone https://mirror.ghproxy.com/zsh-users/zsh-autosuggestions ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions
+    git clone https://mirror.ghproxy.com/https://github.com/zsh-users/zsh-autosuggestions ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions
 
     # 安装zsh-syntax-highlighting插件
-    git clone https://mirror.ghproxy.com/zsh-users/zsh-syntax-highlighting ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting
+    git clone https://mirror.ghproxy.com/https://github.com/zsh-users/zsh-syntax-highlighting ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting
 
     # 配置zsh插件
     sed -i.bak 's/^plugins=(\(.*\))/plugins=(git zsh-autosuggestions zsh-syntax-highlighting)/' ~/.zshrc
