@@ -171,7 +171,9 @@ install_nodejs() {
       npm install -g cnpm --registry=https://registry.npmmirror.com
       npm install -g pnpm --registry=https://registry.npmmirror.com
       npm install -g yarn --registry=https://registry.npmmirror.com
-      pnpm config registry https://registry.npm.taobao.org
+
+      npm config set registry https://registry.npmmirror.com
+
     fi
   fi
 }
