@@ -137,8 +137,7 @@ install_nvs() {
 
   if [[ ! -d "$nvs_dir" ]]; then
     export NVS_HOME="$nvs_dir"
-   # git clone https://gitee.com/wsz7777/nvs --depth=1 "$nvs_dir"
-    git clone https://ghproxy.com/https://github.com/jasongin/nvs --depth=1 "$nvs_dir"
+    git clone https://mirror.ghproxy.com/https://github.com/jasongin/nvs --depth=1 "$nvs_dir"
     
     . "$nvs_dir/nvs.sh" install
   fi
@@ -217,9 +216,7 @@ EOL
 install_docker_compose() {
   if [[ ! -x "$(command -v docker-compose)" ]]; then
     log "${BLUE}正在安装${FUCHSIA}Docker Compose${BLUE}..."
-    # curl -L https://get.daocloud.io/docker/compose/releases/download/v2.2.3/docker-compose-$(uname -s)-$(uname -m) > /usr/local/bin/docker-compose
-    curl -L "https://ghproxy.com/https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-    # curl -L "https://githubfast.com/https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+    curl -L "https://mirror.ghproxy.com/https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
     chmod +x /usr/local/bin/docker-compose
   fi
 }
@@ -551,7 +548,7 @@ start_docker_compose() {
 install_oh_my_zsh() {
   if [[ ! -d "$HOME/.oh-my-zsh" ]]; then
     log "${BLUE}正在安装${FUCHSIA}Oh-My-Zsh${BLUE}..."
-    yes | sh -c "$(curl -fsSL https://gitee.com/wosi/ohmyzsh/raw/master/tools/install.sh)"
+    yes | sh -c "$(curl -fsSL https://mirror.ghproxy.com/ohmyzsh/ohmyzsh/raw/master/tools/install.sh)"
 
     # 切换默认Shell为Zsh
     usermod -s /bin/zsh root
@@ -573,10 +570,10 @@ install_oh_my_zsh() {
     fi
 
     # 安装zsh-autosuggestions插件
-    git clone https://gitee.com/dictxiong/zsh-autosuggestions ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions
+    git clone https://mirror.ghproxy.com/zsh-users/zsh-autosuggestions ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions
 
     # 安装zsh-syntax-highlighting插件
-    git clone https://gitee.com/simonliu009/zsh-syntax-highlighting ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting
+    git clone https://mirror.ghproxy.com/zsh-users/zsh-syntax-highlighting ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting
 
     # 配置zsh插件
     sed -i.bak 's/^plugins=(\(.*\))/plugins=(git zsh-autosuggestions zsh-syntax-highlighting)/' ~/.zshrc
