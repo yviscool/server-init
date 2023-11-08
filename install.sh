@@ -215,7 +215,9 @@ EOL
 install_docker_compose() {
   if [[ ! -x "$(command -v docker-compose)" ]]; then
     log "${BLUE}正在安装${FUCHSIA}Docker Compose${BLUE}..."
-    curl -L https://get.daocloud.io/docker/compose/releases/download/v2.2.3/docker-compose-$(uname -s)-$(uname -m) > /usr/local/bin/docker-compose
+    # curl -L https://get.daocloud.io/docker/compose/releases/download/v2.2.3/docker-compose-$(uname -s)-$(uname -m) > /usr/local/bin/docker-compose
+    curl -L "https://ghproxy.com/https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+    # curl -L "https://githubfast.com/https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
     chmod +x /usr/local/bin/docker-compose
   fi
 }
