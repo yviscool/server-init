@@ -137,7 +137,9 @@ install_nvs() {
 
   if [[ ! -d "$nvs_dir" ]]; then
     export NVS_HOME="$nvs_dir"
-    git clone https://gitee.com/wsz7777/nvs --depth=1 "$nvs_dir"
+   # git clone https://gitee.com/wsz7777/nvs --depth=1 "$nvs_dir"
+    git clone https://ghproxy.com/https://github.com/jasongin/nvs --depth=1 "$nvs_dir"
+    
     . "$nvs_dir/nvs.sh" install
   fi
 
