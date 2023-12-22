@@ -322,6 +322,17 @@ services:
       - 'host.docker.internal:host-gateway'
 EOL
 
+    # Generate random passwords
+    generate_random_passwords() {
+        local password_length=16
+        MYSQL_ROOT_PASSWORD=$(openssl rand -base64 32 | tr -dc 'a-zA-Z0-9' | head -c$password_length)
+        POSTGRES_PASSWORD=$(openssl rand -base64 32 | tr -dc 'a-zA-Z0-9' | head -c$password_length)
+        REDIS_PASSWORD=$(openssl rand -base64 32 | tr -dc 'a-zA-Z0-9' | head -c$password_length)
+        MONGO_INITDB_ROOT_PASSWORD=$(openssl rand -base64 32 | tr -dc 'a-zA-Z0-9' | head -c$password_length)
+    }
+
+    generate_random_passwords
+    
     log "${BLUE}写入${FUCHSIA}.env${BLUE}文件..."
     cat > $compose_dir/.env <<"EOL"
 DOCKER_NETWORK=bridge
@@ -329,7 +340,7 @@ DOCKER_NETWORK=bridge
 # mysql
 MYSQL_NAME=mysql
 # MYSQL_VERSION=5.7 写死了5.7版本 避免路径映射不对
-MYSQL_ROOT_PASSWORD=justfortest_tmac_forever
+MYSQL_ROOT_PASSWORD=$MYSQL_ROOT_PASSWORD
 MYSQL_PORT_MAPPING=3306
 DIR_MYSQL_CONF=/opt/dockerdata/mysql/conf
 DIR_MYSQL_DATA=/opt/dockerdata/mysql/data
@@ -340,7 +351,7 @@ DIR_MYSQL_INIT_SCRIPTS=/opt/dockerdata/mysql/init
 POSTGRES_NAME=postgres
 # POSTGRES_VERSION=14.0
 POSTGRES_USER=postgres
-POSTGRES_PASSWORD=justfortest_tmac_forever
+POSTGRES_PASSWORD=$POSTGRES_PASSWORD
 POSTGRES_PORT_MAPPING=5432
 DIR_POSTGRES_CONF=/opt/dockerdata/postgres/conf
 DIR_POSTGRES_DATA=/opt/dockerdata/postgres/data
@@ -351,7 +362,7 @@ DIR_POSTGRES_INIT_SCRIPTS=/opt/dockerdata/postgres/init
 # redis
 REDIS_NAME=redis
 # REDIS_VERSION=5
-REDIS_PASSWORD=justfortest_tmac_forever
+REDIS_PASSWORD=$REDIS_PASSWORD
 REDIS_PORT_MAPPING=6379
 DIR_REDIS_DATA=/opt/dockerdata/redis/data
 
@@ -361,7 +372,7 @@ MONGO_VERSION=latest
 MONGO_PORT_MAPPING=27017
 MONGO_INITDB_DATABASE=db1
 MONGO_INITDB_ROOT_USERNAME=root
-MONGO_INITDB_ROOT_PASSWORD=justfortest_tmac_forever
+MONGO_INITDB_ROOT_PASSWORD=$MONGO_INITDB_ROOT_PASSWORD
 DIR_MONGO_DATA=/opt/dockerdata/mongo/data
 # 这个目录里的.js/.sh 文件会在容器启动时被扫描执行
 DIR_MONGO_INIT_SCRIPTS=/opt/dockerdata/mongo/init
