@@ -1,7 +1,7 @@
 #!/bin/sh
 ##################################################################################
-# Version	: 1.50								#
-# Date		: 2023-07-09							#
+# Version	: 1.01								#
+# Date		: 2024-01-01							#
 # Author	: yungvenuz							#
 # Conact	: 5196666qwe@email.com						#
 ##################################################################################
@@ -95,9 +95,10 @@ install_package() {
       zh_TW*) log "${GREEN}正在安裝$package_name..." ;;
       *) log "${GREEN}Installing $package_name..." ;;
     esac
-    sh -c "$Install $package"
+    yes | sh -c "$Install $package"  # 在这里加入了 yes 命令
   fi
 }
+
 
 # 安装常用工具
 install_tools() {
@@ -137,7 +138,8 @@ install_nvs() {
 
   if [[ ! -d "$nvs_dir" ]]; then
     export NVS_HOME="$nvs_dir"
-    git clone https://mirror.ghproxy.com/https://github.com/jasongin/nvs --depth=1 "$nvs_dir"
+    # git clone https://mirror.ghproxy.com/https://github.com/jasongin/nvs --depth=1 "$nvs_dir"
+    git clone https://gitee.com/lookenghua/nvs --depth=1 "$nvs_dir"
     
     . "$nvs_dir/nvs.sh" install
   fi
@@ -171,6 +173,7 @@ install_nodejs() {
       npm install -g cnpm --registry=https://registry.npmmirror.com
       npm install -g pnpm --registry=https://registry.npmmirror.com
       npm install -g yarn --registry=https://registry.npmmirror.com
+      npm install -g bun --registry=https://registry.npmmirror.com
 
       npm config set registry https://registry.npmmirror.com
 
@@ -186,7 +189,8 @@ install_nodejs() {
 install_docker() {
   if [[ ! -x "$(command -v docker)" ]]; then
     log "${BLUE}正在安装${FUCHSIA}Docker${BLUE}..."
-    dnf config-manager --add-repo=http://mirrors.tencent.com/docker-ce/linux/centos/docker-ce.repo
+    dnf config-manager  --add-repo=https://mirrors.aliyun.com/docker-ce/linux/centos/docker-ce.repo
+    # dnf config-manager --add-repo=http://mirrors.tencent.com/docker-ce/linux/centos/docker-ce.repo
     dnf install -y docker-ce --nobest
 
     usermod -aG docker $USER
@@ -200,7 +204,7 @@ install_docker() {
 {
     "registry-mirrors": [
         "https://ustc-edu-cn.mirror.aliyuncs.com",
-	"https://mirror.ccs.tencentyun.com",
+	    "https://mirror.ccs.tencentyun.com",
         "https://docker.mirrors.sjtug.sjtu.edu.cn",
         "https://mirror.baidubce.com",
         "https://hub-mirror.c.163.com"
@@ -218,10 +222,13 @@ EOL
 install_docker_compose() {
   if [[ ! -x "$(command -v docker-compose)" ]]; then
     log "${BLUE}正在安装${FUCHSIA}Docker Compose${BLUE}..."
-    curl -L "https://mirror.ghproxy.com/https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-    chmod +x /usr/local/bin/docker-compose
+    sudo pip3 install -U pip setuptools
+    sudo pip3 install docker-compose
+  else
+    log "${GREEN}Docker Compose 已经安装，跳过安装步骤${RESET}"
   fi
 }
+
 
 
 
@@ -323,18 +330,15 @@ services:
 EOL
 
     # Generate random passwords
-    generate_random_passwords() {
-        local password_length=16
-        MYSQL_ROOT_PASSWORD=$(openssl rand -base64 32 | tr -dc 'a-zA-Z0-9' | head -c$password_length)
-        POSTGRES_PASSWORD=$(openssl rand -base64 32 | tr -dc 'a-zA-Z0-9' | head -c$password_length)
-        REDIS_PASSWORD=$(openssl rand -base64 32 | tr -dc 'a-zA-Z0-9' | head -c$password_length)
-        MONGO_INITDB_ROOT_PASSWORD=$(openssl rand -base64 32 | tr -dc 'a-zA-Z0-9' | head -c$password_length)
-    }
+    password_length=16
+    MYSQL_ROOT_PASSWORD=$(openssl rand -base64 32 | tr -dc 'a-zA-Z0-9' | head -c$password_length)
+    POSTGRES_PASSWORD=$(openssl rand -base64 32 | tr -dc 'a-zA-Z0-9' | head -c$password_length)
+    REDIS_PASSWORD=$(openssl rand -base64 32 | tr -dc 'a-zA-Z0-9' | head -c$password_length)
+    MONGO_INITDB_ROOT_PASSWORD=$(openssl rand -base64 32 | tr -dc 'a-zA-Z0-9' | head -c$password_length)
 
-    generate_random_passwords
     
     log "${BLUE}写入${FUCHSIA}.env${BLUE}文件..."
-    cat > $compose_dir/.env <<"EOL"
+    cat > $compose_dir/.env <<EOL
 DOCKER_NETWORK=bridge
 
 # mysql
@@ -445,87 +449,87 @@ http {
 	    index        index.html;
         #charset koi8-r;
 
-	location /images/ {
-         	root /root/crm/;
-	    autoindex on;
-	    log_not_found on;
-	    access_log on;
-	    # 缓存七天
-	    expires 7d;
-	}
+        location /images/ {
+            root /root/crm/;
+            autoindex on;
+            log_not_found on;
+            access_log on;
+            # 缓存七天
+            expires 7d;
+        }
 
 
-	#location ~* ^.+\.(jpg|jpeg|gif|png|bmp|js|css)$ {
-        	#access_log off;
-        	#root html;
-        	#expires 30d;
-        	#break;
+        #location ~* ^.+\.(jpg|jpeg|gif|png|bmp|js|css)$ {
+                #access_log off;
+                #root html;
+                #expires 30d;
+                #break;
+            #}
+
+
+        location /static {
+            #root /home/www/;
+            alias /home/www;
+            autoindex on;
+        }
+
+        #location ~ \.txt$ {
+            # root /home/www/;
+                #alias /home/www;
+                #autoindex on;
         #}
 
 
-	location /static {
-		#root /home/www/;
-		alias /home/www;
-		autoindex on;
-	}
+        location /erp/ {
+            proxy_pass http://host.docker.internal:3001/;
+            #proxy_pass http://172.17.87.184:3001/;
+            proxy_redirect off;
+            proxy_set_header X-Real-IP $remote_addr;
+                proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        }
 
-	#location ~ \.txt$ {
-	    # root /home/www/;
-            #alias /home/www;
-            #autoindex on;
-	#}
+        location /etm/ {
+            # ifconfig eth0 | grep inet | grep -v inet6 | awk '{print $2}'
+            proxy_pass http://host.docker.internal:3001/;
+            #proxy_pass http://172.17.87.184:3001/;
+            proxy_redirect off;
+            proxy_set_header X-Real-IP $remote_addr;
+                proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        }
 
+        location /cdn {
+            rewrite /(.+)$ /$1 break; 
+            proxy_pass https://hzxiaoliang.oss-cn-zhangjiakou.aliyuncs.com;
+        }
 
-	location /erp/ {
-	     proxy_pass http://host.docker.internal:3001/;
-	     #proxy_pass http://172.17.87.184:3001/;
-	     proxy_redirect off;
-	     proxy_set_header X-Real-IP $remote_addr;
-             proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-	}
+        location /txtype {
+            rewrite ^/(.*) https://my-bucket-xrfferp-1253480735.cos-website.ap-shanghai.myqcloud.com;
+        }
+        
+        location ~ ^(.+\.php)(.*)$ {
+            root              /var/www;
+            fastcgi_pass 172.17.0.6:9000;
+            fastcgi_index  index.php;
+            fastcgi_split_path_info  ^(.+\.php)(.*)$;
+            fastcgi_param PATH_INFO $fastcgi_path_info;
+            if (!-e $document_root$fastcgi_script_name) {
+            return 404;
+            }
+            fastcgi_param  SCRIPT_FILENAME  $document_root$fastcgi_script_name;
+            include        fastcgi_params;
+        }
 
-	location /etm/ {
-	     # ifconfig eth0 | grep inet | grep -v inet6 | awk '{print $2}'
-	     proxy_pass http://host.docker.internal:3001/;
-	     #proxy_pass http://172.17.87.184:3001/;
-	     proxy_redirect off;
-	     proxy_set_header X-Real-IP $remote_addr;
-             proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-	}
-
-	location /cdn {
-		rewrite /(.+)$ /$1 break; 
-		proxy_pass https://hzxiaoliang.oss-cn-zhangjiakou.aliyuncs.com;
-	}
-
-	location /txtype {
-		rewrite ^/(.*) https://my-bucket-xrfferp-1253480735.cos-website.ap-shanghai.myqcloud.com;
-	}
-	
-	location ~ ^(.+\.php)(.*)$ {
-	     root              /var/www;
-	     fastcgi_pass 172.17.0.6:9000;
-	     fastcgi_index  index.php;
-	     fastcgi_split_path_info  ^(.+\.php)(.*)$;
-	     fastcgi_param PATH_INFO $fastcgi_path_info;
-	     if (!-e $document_root$fastcgi_script_name) {
-		 return 404;
-	     }
-	     fastcgi_param  SCRIPT_FILENAME  $document_root$fastcgi_script_name;
-	     include        fastcgi_params;
-	}
-
-	location = /robots.txt {
-	   add_header Content-Type text/plain;
-	   return 200 "User-agent: *\nDisallow: /\n";
-	}
+        location = /robots.txt {
+        add_header Content-Type text/plain;
+        return 200 "User-agent: *\nDisallow: /\n";
+        }
 
 
-	#location ~* ^.+\.(jpg|jpeg|png)$ {
-	#}
+        #location ~* ^.+\.(jpg|jpeg|png)$ {
+        #}
 
 
-    #access_log  logs/host.access.log  main;
+        #access_log  logs/host.access.log  main;
 
     }
 
@@ -561,11 +565,15 @@ start_docker_compose() {
 install_oh_my_zsh() {
   if [[ ! -d "$HOME/.oh-my-zsh" ]]; then
     log "${BLUE}正在安装${FUCHSIA}Oh-My-Zsh${BLUE}..."
-    yes | sh -c "$(curl -fsSL https://mirror.ghproxy.com/https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
+    git clone https://mirrors.tuna.tsinghua.edu.cn/git/ohmyzsh.git
+    cd ohmyzsh/tools
+    REMOTE=https://mirrors.tuna.tsinghua.edu.cn/git/ohmyzsh.git sh install.sh
+    cd ../..
 
     # 切换默认Shell为Zsh
     usermod -s /bin/zsh root
-    /bin/zsh
+    # /bin/zsh
+    
 
     # 配置NVS在Zsh中
     echo "export NVS_HOME=$HOME/.nvs" >> ~/.zshrc
@@ -583,14 +591,32 @@ install_oh_my_zsh() {
     fi
 
     # 安装zsh-autosuggestions插件
-    git clone https://mirror.ghproxy.com/https://github.com/zsh-users/zsh-autosuggestions ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions
+    git clone https://gitee.com/mirrors/zsh-autosuggestions.git ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions
 
     # 安装zsh-syntax-highlighting插件
-    git clone https://mirror.ghproxy.com/https://github.com/zsh-users/zsh-syntax-highlighting ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting
+    git clone https://gitee.com/mirrors/zsh-syntax-highlighting.git ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting
 
     # 配置zsh插件
-    sed -i.bak 's/^plugins=(\(.*\))/plugins=(git zsh-autosuggestions zsh-syntax-highlighting)/' ~/.zshrc
-    source ~/.zshrc
+    sed -i.bak 's/^plugins=(\(.*\))/plugins=(git z zsh-autosuggestions zsh-syntax-highlighting)/' ~/.zshrc
+
+    #!/bin/bash
+
+    # 判断是否已经是 Zsh
+    if [[ "$SHELL" != "/bin/zsh" ]]; then
+        # 尝试切换到 Zsh
+        if hash zsh 2>/dev/null; then
+            echo "Switching to Zsh..."
+            zsh -c "source ~/.zshrc"
+        else
+            echo "Zsh is not installed. Please install Zsh and re-run this script."
+            exit 1
+        fi
+    else
+        # 已经在 Zsh 中，直接加载配置文件
+        source ~/.zshrc
+    fi
+
+    yes | /bin/zsh
   fi
 }
 
