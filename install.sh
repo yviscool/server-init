@@ -567,13 +567,11 @@ install_oh_my_zsh() {
     log "${BLUE}正在安装${FUCHSIA}Oh-My-Zsh${BLUE}..."
     git clone https://mirrors.tuna.tsinghua.edu.cn/git/ohmyzsh.git
     cd ohmyzsh/tools
-    REMOTE=https://mirrors.tuna.tsinghua.edu.cn/git/ohmyzsh.git sh install.sh
-    cd ../..
+    yes | REMOTE=https://mirrors.tuna.tsinghua.edu.cn/git/ohmyzsh.git sh install.sh
 
     # 切换默认Shell为Zsh
     usermod -s /bin/zsh root
     # /bin/zsh
-    
 
     # 配置NVS在Zsh中
     echo "export NVS_HOME=$HOME/.nvs" >> ~/.zshrc
@@ -599,8 +597,6 @@ install_oh_my_zsh() {
     # 配置zsh插件
     sed -i.bak 's/^plugins=(\(.*\))/plugins=(git z zsh-autosuggestions zsh-syntax-highlighting)/' ~/.zshrc
 
-    #!/bin/bash
-
     # 判断是否已经是 Zsh
     if [[ "$SHELL" != "/bin/zsh" ]]; then
         # 尝试切换到 Zsh
@@ -616,7 +612,7 @@ install_oh_my_zsh() {
         source ~/.zshrc
     fi
 
-    yes | /bin/zsh
+    /bin/zsh
   fi
 }
 
